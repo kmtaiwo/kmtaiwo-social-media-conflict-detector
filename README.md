@@ -1,5 +1,3 @@
-# kmtaiwo-social-media-conflict-detector
-ML classifier detecting high-conflict social media interactions using scikit-learn
 
 # Social Media Conflict Detection (Binary Classification)
 
