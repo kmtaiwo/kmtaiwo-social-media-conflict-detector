@@ -1,95 +1,85 @@
-
 # Social Media Conflict Detection (Binary Classification)
 
-**Author:** Kola Taiwo  
+**Author:** [Kola Taiwo](https://github.com/kmtaiwo)  
+**Repository:** [kmtaiwo/kmtaiwo-social-media-conflict-detector](https://github.com/kmtaiwo/kmtaiwo-social-media-conflict-detector)
 
-This README documents the **machine learning implementation** for predicting **high vs. low interpersonal conflict** from anonymized social-media usage and engagement data (ages 16–25, multiple countries). It is written to stand alone in a **dedicated GitHub repository** (fork or new repo) while remaining compatible with the broader **Social Sphere** student analytics context.
+Standalone project focused on **binary classification** of self-reported interpersonal conflict related to social media, for **content moderation** and **platform safety** use cases.
 
 ---
 
 ## Problem definition
 
-- **Original target:** `Conflicts_Over_Social_Media` on an ordinal scale **0–5** (0 = none, 5 = severe).
-- **Reframed task:** **Binary classification** for clearer decisions in content moderation and platform safety:
-  - **High conflict (positive class):** score **≥ 4**
-  - **Low conflict (negative class):** score **≤ 3**
-- **Primary metric:** **F1-score** (balances missing high-conflict cases vs. over-flagging).
-- **Secondary metrics:** Accuracy, precision, recall (class 1), ROC-AUC, confusion matrices.
+| Item | Definition |
+|------|------------|
+| **Original target** | `Conflicts_Over_Social_Media` on an ordinal scale **0–5** (0 = none, 5 = severe). |
+| **Reframed task** | **Binary classification** for clearer operational decisions. |
+| **Positive class (high conflict)** | Score **≥ 4** |
+| **Negative class (low conflict)** | Score **≤ 3** |
+| **Primary metric** | **F1-score** — balances missing true high-conflict cases vs. over-flagging low-conflict users. |
+| **Secondary metrics** | Accuracy, precision & recall for **class 1**, ROC-AUC, confusion matrices. |
 
 ### Why threshold ≥ 4 is not arbitrary
 
-The cut at **4** is justified by **scale semantics** (4–5 are the elevated end of 0–5), **class balance** (keeps the positive class frequent enough to train and evaluate stably), and **operational trade-offs**: a lower threshold (e.g. 3) inflates alert volume and moderation load; a higher threshold (e.g. 5 only) misses many meaningful cases. **4** targets clearly elevated conflict while keeping workload and label separation manageable—aligned with the notebook’s explicit threshold reasoning.
+The cut at **4** is justified by:
+
+1. **Scale semantics** — On 0–5, scores **4–5** represent the **elevated** end of conflict severity.  
+2. **Class balance** — Keeps the positive class frequent enough to **train and evaluate** the model stably (not dominated by a tiny minority class).  
+3. **Operational trade-offs** — A **lower** threshold (e.g. 3) increases alert volume and **moderation load**; a **higher** threshold (e.g. only 5) **misses** many meaningful high-conflict cases.  
+4. **4** targets **clearly elevated** conflict while keeping workload and **label separation** manageable — aligned with explicit threshold reasoning in the analysis notebook.
 
 ---
 
-## Data and preprocessing
+## Repository layout
 
-- Preprocessing: numeric scaling, one-hot encoding of categoricals (e.g. academic level, platform, relationship status), **`Country` encoded** for modeling (not dropped for this supervised task).
-- **Train / test split:** 80% / 20%, `stratify=y_conflict`, `random_state=42`.
-- **Feature selection:** **SelectKBest** with **F-test (`f_classif`)**, **k = 15** features, fit on training data only; same transform applied to test.
+```
+kmtaiwo-social-media-conflict-detector/
+├── README.md                 # This file
+├── requirements.txt          # Python dependencies for the notebook
+├── PUSH_TO_GITHUB.md         # How to push to GitHub without touching the monorepo
+├── .gitignore
+├── data/
+│   └── README.md             # How to obtain the dataset (see below)
+├── notebooks/
+│   └── mlf_predictive_task_conflict_classifier.ipynb
+└── scripts/
+    └── sync-to-github-clone.ps1   # Optional: copy this package into your local repo clone
+```
 
----
-
-## Models compared
-
-| Model | Role |
-|--------|------|
-| **Logistic Regression (default)** | Baseline. |
-| **Logistic Regression (`class_weight='balanced'`)** | Handles class imbalance; **recommended for deployment** in this analysis. |
-| **Random Forest** | Nonlinear benchmark (e.g. `n_estimators=100`, `max_depth=10`). |
-
-**MLflow** can be used to track experiments (`conflict_classification_v2` pattern in the notebook).
-
----
-
-## Evaluation philosophy
-
-1. **Train vs. test:** Same metrics on **train** and **test** to detect **overfitting** (large gap → model memorizing training data).
-2. **Bias–variance:** **Balanced LR** tends toward **higher bias, lower variance** (stable, interpretable). **RF** can show **lower bias, higher variance**; if train performance is much better than test with only a small test gain over LR, RF is likely **overfitting**—address with **regularization** (e.g. lower `max_depth`, higher `min_samples_leaf`, `max_features`, optional `max_samples`) or prefer LR for a first deployment.
-3. **Generalization across countries:** A good overall F1 does **not** guarantee performance on **future cohorts or new countries**. Mitigations: report metrics **by country** (or region), use **country holdout** validation when possible, and monitor **distribution shift** when deploying to new geographies.
+This package contains **only** the conflict-classification notebook and docs from the author’s submission path (`kola-taiwo`). It does **not** include other team members’ submissions.
 
 ---
 
-## Deployment recommendation (junior–mid level, “ship today”)
+## Data
 
-For a **first production cut**, **Balanced Logistic Regression** is a strong choice: **interpretable** (coefficients), **stable** train–test behavior, **simpler** to monitor and explain than a tuned forest—while RF remains useful as a **benchmark** and for **feature importance** comparison.
+The notebook expects the Social Sphere dataset (e.g. `ssma.csv`) with columns used in preprocessing.  
 
----
-
-## Repository layout (typical)
-
-
-
-├── README.md
-
-├── requirements.txt
-
-├── notebooks
-
-│ ├── eda_kmtaiwo.ipynb
-
-│ ├── mlf_predictive_task_conflict_classifier.ipynb # Main conflict-classification pipeline
-
-│ ├── mlf_predictive_task_addiction_level-regressor.ipynb
-
-│ └── mlf_clustering_model.ipynb
-
-├── data/ # e.g. ssma.csv (if included)
-
-├── models/ # Serialized models (if committed)
-
-└── app.py # Optional Streamlit app (separate deliverable)
-
+- Place your CSV in **`data/`** and adjust the notebook’s **load path** if needed (e.g. `data/ssma.csv`).  
+- Do **not** commit restricted data unless your license allows it. See **`data/README.md`**.
 
 ---
 
-## Quick start (notebooks)
+## Quick start
 
+```bash
+cd kmtaiwo-social-media-conflict-detector
 python -m venv .venv
-
-.venv\Scripts\activate          # Windows
+# Windows:
+.venv\Scripts\activate
+# macOS/Linux:
+# source .venv/bin/activate
 
 pip install -r requirements.txt
-
 jupyter notebook notebooks/mlf_predictive_task_conflict_classifier.ipynb
+```
 
+---
+
+## Optional: full Social Sphere monorepo
+
+The **original course / team project** (including Streamlit app, other notebooks, and team submissions) remains in the separate **Social-Sphere-Project** repository — **nothing is removed** by this standalone package.
+
+---
+
+## License
+
+Use the dataset and code in line with your course, team, and organization’s rules.
